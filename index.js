@@ -63,17 +63,23 @@ client.once(Events.ClientReady, () => {
 });
 
 // =========================
-// MEMBER JOIN EVENT
+// MEMBER JOIN EVENT (FIXED)
 // =========================
 
 client.on(Events.GuildMemberAdd, async (member) => {
 
   try {
 
-    await member.roles.add(ROLE_1_ID);
-    await member.roles.add(ROLE_2_ID);
+    // 🔧 FIX: Rollen sicher holen
+    const role1 = member.guild.roles.cache.get(ROLE_1_ID);
+    const role2 = member.guild.roles.cache.get(ROLE_2_ID);
 
-    const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
+    // 🔧 FIX: Rollen nur geben wenn vorhanden
+    if (role1) await member.roles.add(role1).catch(console.error);
+    if (role2) await member.roles.add(role2).catch(console.error);
+
+    // 🔧 FIX: Channel sicher holen
+    const channel = await member.guild.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
 
     if (!channel) return;
 
@@ -81,31 +87,18 @@ client.on(Events.GuildMemberAdd, async (member) => {
       .setColor("Yellow")
       .setTitle("⚡️ Logging ⚡️")
       .setDescription(
-`${member} ist gejoined!
+`${member.user.tag} ist gejoined!
 
 UserId: ${member.id}
 
 Aktuelle Memberanzahl: ${member.guild.memberCount}`
       )
-      .setThumbnail(
-        member.user.displayAvatarURL({
-          dynamic: true
-        })
-      )
-      .setImage(
-        member.user.displayAvatarURL({
-          dynamic: true,
-          size: 1024
-        })
-      )
-      .setFooter({
-        text: "powered by FARM"
-      })
+      .setThumbnail(member.user.displayAvatarURL())
+      .setImage(member.user.displayAvatarURL({ size: 1024 }))
+      .setFooter({ text: "powered by FARM" })
       .setTimestamp();
 
-    await channel.send({
-      embeds: [embed]
-    });
+    await channel.send({ embeds: [embed] });
 
   } catch (err) {
     console.error("Fehler beim Join:", err);
@@ -140,20 +133,9 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 📞 Kanal: ${newState.channel}
 ⏰ Zeit: <t:${Math.floor(Date.now() / 1000)}:R>`
         )
-        .setThumbnail(
-          newState.member.user.displayAvatarURL({
-            dynamic: true
-          })
-        )
-        .setImage(
-          newState.member.user.displayAvatarURL({
-            dynamic: true,
-            size: 1024
-          })
-        )
-        .setFooter({
-          text: "FARM Voice-Support"
-        })
+        .setThumbnail(newState.member.user.displayAvatarURL())
+        .setImage(newState.member.user.displayAvatarURL({ size: 1024 }))
+        .setFooter({ text: "FARM Voice-Support" })
         .setTimestamp();
 
       await logChannel.send({
