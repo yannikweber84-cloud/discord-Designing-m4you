@@ -63,22 +63,31 @@ client.once(Events.ClientReady, () => {
 });
 
 // =========================
-// MEMBER JOIN EVENT (FIXED)
+// MEMBER JOIN EVENT (FIXED SAFE VERSION)
 // =========================
 
 client.on(Events.GuildMemberAdd, async (member) => {
 
   try {
 
-    // 🔧 FIX: Rollen sicher holen
-    const role1 = member.guild.roles.cache.get(ROLE_1_ID);
-    const role2 = member.guild.roles.cache.get(ROLE_2_ID);
+    // 🔧 FIX: Rollen sicher laden (kein Cache Problem mehr)
+    const role1 = await member.guild.roles.fetch(ROLE_1_ID).catch(() => null);
+    const role2 = await member.guild.roles.fetch(ROLE_2_ID).catch(() => null);
 
-    // 🔧 FIX: Rollen nur geben wenn vorhanden
-    if (role1) await member.roles.add(role1).catch(console.error);
-    if (role2) await member.roles.add(role2).catch(console.error);
+    // 🔧 FIX: Rollen vergeben + Fehler verhindern
+    if (role1) {
+      await member.roles.add(role1).catch(err =>
+        console.error("Fehler Role1:", err)
+      );
+    }
 
-    // 🔧 FIX: Channel sicher holen
+    if (role2) {
+      await member.roles.add(role2).catch(err =>
+        console.error("Fehler Role2:", err)
+      );
+    }
+
+    // 🔧 FIX: Channel sicher laden
     const channel = await member.guild.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
 
     if (!channel) return;
